@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Capacity Counter — T-Shirts</title>
+<style>
+  :root{
+    --bg:#0b0c10; --panel:#151821; --muted:#25293a; --line:#23283a; --text:#e8eefc; --sub:#aeb8d4;
+    --accent:#6da8ff; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  header{padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121522,#0b0c10)}
+  h1{margin:0;font-size:18px}
+  main{display:grid;gap:16px;padding:16px;grid-template-columns:300px 1fr}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  label{font-size:12px;color:var(--sub)}
+  select, input[type="number"]{width:100%;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{background:var(--muted);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#071021;font-weight:600}
+  .btn.ghost{background:transparent}
+  .btn.size{min-width:56px;font-weight:700}
+  .stack{display:grid;gap:10px}
+  .hr{height:1px;background:var(--line);margin:10px 0}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;color:var(--sub);text-align:left}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+  .progress{height:8px;background:#0e1220;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .bar{height:100%;background:var(--ok)}
+  .warn .bar{background:var(--warn)}
+  .bad .bar{background:var(--bad)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:12px}
+  @media (max-width:980px){ main{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header><h1>Capacity Counter — T-Shirt Calculator</h1></header>
+
+<main>
+  <!-- Controls -->
+  <section class="card stack">
+    <div>
+      <label>Person</label>
+      <select id="personSel"></select>
+    </div>
+
+    <div>
+      <label>Quick add by size</label>
+      <div class="row">
+        <button class="btn size" data-size="XS">XS</button>
+        <button class="btn size" data-size="S">S</button>
+        <button class="btn size" data-size="M">M</button>
+        <button class="btn size" data-size="L">L</button>
+        <button class="btn size" data-size="XL">XL</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <span class="pill">Defaults: XS 2h • S 6h • M 12h • L 22h • XL 32h</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="undoBtn" class="btn">Undo last for person</button>
+      <button id="clearBtn" class="btn ghost">Clear person</button>
+      <button id="resetAllBtn" class="btn ghost" style="margin-left:auto">Reset all</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div>
+      <label>Adjust default hours (optional)</label>
+      <div class="row">
+        <span class="pill">XS <input id="hXS" type="number" min="0" value="2" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">S <input id="hS" type="number" min="0" value="6" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">M <input id="hM" type="number" min="0" value="12" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">L <input id="hL" type="number" min="0" value="22" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">XL <input id="hXL" type="number" min="0" value="32" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="saveHours" class="btn">Save hours</button>
+        <span class="pill">XL is “~1 week+” anchor; tweak as you learn</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section class="card">
+    <h3 style="margin:0 0 8px">Team Capacity (live)</h3>
+    <table id="teamTable">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>Cap (h)</th>
+          <th>Used (h)</th>
+          <th>Remaining</th>
+          <th>Counts (XS/S/M/L/XL)</th>
+          <th>Remaining mix (fits now)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+/*** State ***/
+const defaultHours = { XS:2, S:6, M:12, L:22, XL:32 };
+let hours = {...defaultHours};
+
+let people = [
+  {id: id(), name:"Alec",   capacity:56, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Bessie", capacity:56, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Olivia", capacity:56, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Ryan",   capacity:56, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Nem",    capacity:66, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Jericho",capacity:66, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+];
+
+const personSel = document.getElementById('personSel');
+const teamTableBody = document.querySelector('#teamTable tbody');
+
+/*** UI boot ***/
+function boot(){
+  // populate selector
+  personSel.innerHTML = people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  renderTable();
+}
+boot();
+
+/*** Helpers ***/
+function id(){ return Math.random().toString(36).slice(2,9); }
+function fmt(n){ return Number(n.toFixed(1)); }
+
+function addSize(personId, size){
+  const p = people.find(x=>x.id===personId);
+  if(!p) return;
+  const h = Number(hours[size]||0);
+  p.used += h;
+  p.counts[size] += 1;
+  p.history.push({size, h});
+  renderTable();
+}
+
+function undo(personId){
+  const p = people.find(x=>x.id===personId);
+  if(!p || !p.history.length) return;
+  const last = p.history.pop();
+  p.used -= last.h;
+  p.counts[last.size] -= 1;
+  renderTable();
+}
+
+function clearPerson(personId){
+  const p = people.find(x=>x.id===personId);
+  if(!p) return;
+  p.used = 0;
+  p.counts = {XS:0,S:0,M:0,L:0,XL:0};
+  p.history = [];
+  renderTable();
+}
+
+function resetAll(){
+  people.forEach(p=>clearPerson(p.id));
+  hours = {...defaultHours};
+  document.getElementById('hXS').value = hours.XS;
+  document.getElementById('hS').value  = hours.S;
+  document.getElementById('hM').value  = hours.M;
+  document.getElementById('hL').value  = hours.L;
+  document.getElementById('hXL').value = hours.XL;
+  renderTable();
+}
+
+/*** Remaining mix suggestions ***/
+// Greedy packer based on a size order (array like ["XL","L","M","S","XS"])
+function packByOrder(rem, order){
+  const combo = {XS:0,S:0,M:0,L:0,XL:0};
+  let left = rem;
+  for(const s of order){
+    const h = hours[s];
+    if(h<=0) continue;
+    const count = Math.floor(left / h);
+    combo[s] = count;
+    left -= count * h;
+  }
+  return {combo, slack: fmt(left)};
+}
+
+function suggestionText(rem){
+  if(rem <= 0) return `<span class="pill" style="border-color:var(--bad);color:var(--bad)">Over capacity</span>`;
+  const bigFirst = packByOrder(rem, ["XL","L","M","S","XS"]);
+  const medFirst = packByOrder(rem, ["M","L","S","XS","XL"]);
+  const smallFirst = packByOrder(rem, ["S","XS","M","L","XL"]);
+
+  function fmtCombo(obj){
+    const parts = Object.entries(obj.combo).filter(([,v])=>v>0).map(([k,v])=>`${v}${k}`);
+    if(parts.length===0) return "—";
+    return parts.join(" + ") + (obj.slack>0 ? ` (+${obj.slack}h slack)` : "");
+  }
+  return `
+    <div class="stack" style="gap:4px">
+      <div><span class="pill">Big-first:</span> ${fmtCombo(bigFirst)}</div>
+      <div><span class="pill">Medium-first:</span> ${fmtCombo(medFirst)}</div>
+      <div><span class="pill">Small-first:</span> ${fmtCombo(smallFirst)}</div>
+    </div>
+  `;
+}
+
+/*** Render ***/
+function renderTable(){
+  teamTableBody.innerHTML = '';
+  people.forEach(p=>{
+    const tr = document.createElement('tr');
+
+    const used = fmt(p.used);
+    const cap = p.capacity;
+    const rem = fmt(cap - used);
+    const pct = Math.max(0, Math.min(100, Math.round(used / cap * 100)));
+    const rowClass = used>cap ? 'bad' : (cap-used < 10 ? 'warn':'');
+    const counts = `${p.counts.XS}/${p.counts.S}/${p.counts.M}/${p.counts.L}/${p.counts.XL}`;
+
+    tr.innerHTML = `
+      <td><strong>${p.name}</strong></td>
+      <td class="mono">${cap}</td>
+      <td>
+        <div class="row" style="gap:8px">
+          <span class="mono">${used}</span>
+          <div class="progress ${rowClass}" style="flex:1;min-width:120px">
+            <div class="bar" style="width:${pct}%"></div>
+          </div>
+        </div>
+      </td>
+      <td><span class="pill" style="border-color:${rem<0?'var(--bad)':rem<10?'var(--warn)':'#23283a'};color:${rem<0?'var(--bad)':rem<10?'var(--warn)':'var(--sub)'}">${rem}</span></td>
+      <td class="mono">${counts}</td>
+      <td>${suggestionText(rem)}</td>
+    `;
+    teamTableBody.appendChild(tr);
+  });
+}
+
+/*** Events ***/
+document.querySelectorAll('.btn.size').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const size = btn.getAttribute('data-size');
+    addSize(personSel.value, size);
+  });
+});
+document.getElementById('undoBtn').onclick = ()=>undo(personSel.value);
+document.getElementById('clearBtn').onclick = ()=>{ if(confirm('Clear this person?')) clearPerson(personSel.value); };
+document.getElementById('resetAllBtn').onclick = ()=>{ if(confirm('Reset everyone and defaults?')) resetAll(); };
+document.getElementById('saveHours').onclick = ()=>{
+  hours = {
+    XS: Number(document.getElementById('hXS').value)||hours.XS,
+    S:  Number(document.getElementById('hS').value)||hours.S,
+    M:  Number(document.getElementById('hM').value)||hours.M,
+    L:  Number(document.getElementById('hL').value)||hours.L,
+    XL: Number(document.getElementById('hXL').value)||hours.XL,
+  };
+  renderTable();
+};
+</script>
+</body>
+</html>

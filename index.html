@@ -193,16 +193,19 @@ function suggestionText(rem){
   const medFirst = packByOrder(rem, ["M","L","S","XS","XL"]);
   const smallFirst = packByOrder(rem, ["S","XS","M","L","XL"]);
 
-  function fmtCombo(obj){
-    const parts = Object.entries(obj.combo).filter(([,v])=>v>0).map(([k,v])=>`${v}${k}`);
+  function fmtCombo(obj, order){
+    const parts = order
+      .filter(k => obj.combo[k] > 0)
+      .map(k => `${obj.combo[k]}${k}`);
     if(parts.length===0) return "—";
     return parts.join(" + ") + (obj.slack>0 ? ` (+${obj.slack}h slack)` : "");
   }
+
   return `
     <div class="stack" style="gap:4px">
-      <div><span class="pill">Big-first:</span> ${fmtCombo(bigFirst)}</div>
-      <div><span class="pill">Medium-first:</span> ${fmtCombo(medFirst)}</div>
-      <div><span class="pill">Small-first:</span> ${fmtCombo(smallFirst)}</div>
+      <div><span class="pill">Big-first:</span> ${fmtCombo(bigFirst, ["XL","L","M","S","XS"])}</div>
+      <div><span class="pill">Medium-first:</span> ${fmtCombo(medFirst, ["M","L","S","XS","XL"])}</div>
+      <div><span class="pill">Small-first:</span> ${fmtCombo(smallFirst, ["S","XS","M","L","XL"])}</div>
     </div>
   `;
 }

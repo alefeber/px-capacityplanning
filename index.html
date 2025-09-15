@@ -81,7 +81,7 @@
         <button class="btn size tooltip" data-size="XL" data-tip="~32h by default">XL</button>
       </div>
       <div class="row" style="margin-top:6px">
-      <span class="pill">Defaults: XS 1.5h • S 6h • M 14h • L 24h • XL 32h</span>
+        <span class="pill">Defaults: XS 1.5h • S 6h • M 14h • L 24h • XL 32h</span>
       </div>
     </div>
 
@@ -96,11 +96,11 @@
     <div class="stack">
       <label>Adjust default hours (optional)</label>
       <div class="row">
-        <span class="pill">XS <input id="hXS" type="number" min="0" value="2" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
-        <span class="pill">S <input id="hS" type="number" min="0" value="6" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
-        <span class="pill">M <input id="hM" type="number" min="0" value="12" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
-        <span class="pill">L <input id="hL" type="number" min="0" value="22" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
-        <span class="pill">XL <input id="hXL" type="number" min="0" value="32" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">XS <input id="hXS" type="number" step="0.1" min="0" value="1.5" style="width:70px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">S <input id="hS" type="number" step="0.1" min="0" value="6" style="width:70px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">M <input id="hM" type="number" step="0.1" min="0" value="14" style="width:70px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">L <input id="hL" type="number" step="0.1" min="0" value="24" style="width:70px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
+        <span class="pill">XL <input id="hXL" type="number" step="0.1" min="0" value="32" style="width:70px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
       </div>
       <div class="row" style="margin-top:6px">
         <button id="saveHours" class="btn">Save hours</button>
@@ -133,16 +133,16 @@
 
 <script>
 /*** State ***/
-const defaultHours = { XS:1.5, S:6, M:14, L:24, XL:32 };
+const defaultHours = { XS:1.5, S:6, M:14, L:24, XL:32 }; // new defaults
 let hours = {...defaultHours};
 
-// Updated sprint capacities
+// Rounded capacities (nearest tenth)
 let people = [
-  {id: id(), name:"Bessie Nolan",      capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Olivia Reid",       capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Alec Lefeber",      capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Nem Ordinario",     capacity:68.67, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Juan Jericho Yang", capacity:68.67, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Bessie Nolan",      capacity:57.2, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Olivia Reid",       capacity:57.2, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Alec Lefeber",      capacity:57.2, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Nem Ordinario",     capacity:68.7, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Juan Jericho Yang", capacity:68.7, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
 ];
 
 const personSel = document.getElementById('personSel');
@@ -162,7 +162,8 @@ boot();
 
 /*** Helpers ***/
 function id(){ return Math.random().toString(36).slice(2,9); }
-function fmt(n){ return Number(n.toFixed(2)); }
+// fmt to 1 decimal by default; can override with fmt(n,2) etc.
+function fmt(n,d=1){ return Number(n.toFixed(d)); }
 
 function addSize(personId, size){
   const p = people.find(x=>x.id===personId);
@@ -242,12 +243,12 @@ function renderTable(){
   people.forEach(p=>{
     const tr = document.createElement('tr');
 
-    // Per-person daily rate = sprint capacity / 10
+    // Per-person daily rate = sprint capacity / 10 (rounded to 1dp for display)
     const dailyRate = p.capacity / 10;
-    const ptoHours  = fmt((p.ptoDays || 0) * dailyRate);
-    const adjCap    = fmt(p.capacity - ptoHours);
-    const used      = fmt(p.used);
-    const rem       = fmt(adjCap - used);
+    const ptoHours  = fmt((p.ptoDays || 0) * dailyRate, 1);
+    const adjCap    = fmt(p.capacity - ptoHours, 1);
+    const used      = fmt(p.used, 1);
+    const rem       = fmt(adjCap - used, 1);
 
     // Status thresholds
     const warnLimit = adjCap;
@@ -262,21 +263,21 @@ function renderTable(){
 
     tr.innerHTML = `
       <td><strong>${p.name}</strong></td>
-      <td class="mono">${p.capacity.toFixed(2)}</td>
+      <td class="mono">${fmt(p.capacity,1)}</td>
       <td>
-        <input type="number" min="0" step="0.01" value="${p.ptoDays}" style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
-        <div class="muted">= <span class="mono">${ptoHours}</span> h <span class="muted">(at ${dailyRate.toFixed(3)} h/day)</span></div>
+        <input type="number" min="0" step="0.1" value="${p.ptoDays}" style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
+        <div class="muted">= <span class="mono">${ptoHours.toFixed(1)}</span> h <span class="muted">(at ${fmt(dailyRate,1).toFixed(1)} h/day)</span></div>
       </td>
-      <td class="mono">${adjCap}</td>
+      <td class="mono">${adjCap.toFixed(1)}</td>
       <td>
         <div class="row" style="gap:8px">
-          <span class="mono">${used}</span>
+          <span class="mono">${used.toFixed(1)}</span>
           <div class="progress ${rowClass}" style="flex:1;min-width:120px">
             <div class="bar" style="width:${pct}%"></div>
           </div>
         </div>
       </td>
-      <td><span class="pill">${rem}</span></td>
+      <td><span class="pill">${rem.toFixed(1)}</span></td>
       <td>
         <span class="pill" style="border-color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'#23283a'};color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'var(--sub)'}">
           ${statusText}

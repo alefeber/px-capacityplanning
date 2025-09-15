@@ -301,4 +301,24 @@ function renderTable(){
 document.querySelectorAll('.btn.size').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const size = btn.getAttribute('data-size');
-    addSize
+    addSize(personSel.value, size);
+  });
+});
+
+document.getElementById('undoBtn').onclick = ()=>undo(personSel.value);
+document.getElementById('clearBtn').onclick = ()=>{ if(confirm('Clear this person?')) clearPerson(personSel.value); };
+document.getElementById('resetAllBtn').onclick = ()=>{ if(confirm('Reset everyone and defaults?')) resetAll(); };
+
+document.getElementById('saveHours').onclick = ()=>{
+  hours = {
+    XS: Number(document.getElementById('hXS').value)||hours.XS,
+    S:  Number(document.getElementById('hS').value)||hours.S,
+    M:  Number(document.getElementById('hM').value)||hours.M,
+    L:  Number(document.getElementById('hL').value)||hours.L,
+    XL: Number(document.getElementById('hXL').value)||hours.XL,
+  };
+  renderTable();
+};
+</script>
+</body>
+</html>

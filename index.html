@@ -74,14 +74,14 @@
     <div>
       <label>Quick add by size</label>
       <div class="row">
-        <button class="btn size tooltip" data-size="XS" data-tip="~2h by default">XS</button>
+        <button class="btn size tooltip" data-size="XS" data-tip="~1.5h by default">XS</button>
         <button class="btn size tooltip" data-size="S"  data-tip="~6h by default">S</button>
-        <button class="btn size tooltip" data-size="M"  data-tip="~12h by default">M</button>
-        <button class="btn size tooltip" data-size="L"  data-tip="~22h by default">L</button>
+        <button class="btn size tooltip" data-size="M"  data-tip="~14h by default">M</button>
+        <button class="btn size tooltip" data-size="L"  data-tip="~24h by default">L</button>
         <button class="btn size tooltip" data-size="XL" data-tip="~32h by default">XL</button>
       </div>
       <div class="row" style="margin-top:6px">
-        <span class="pill">Defaults: XS 2h • S 6h • M 12h • L 22h • XL 32h</span>
+      <span class="pill">Defaults: XS 1.5h • S 6h • M 14h • L 24h • XL 32h</span>
       </div>
     </div>
 
@@ -133,7 +133,7 @@
 
 <script>
 /*** State ***/
-const defaultHours = { XS:2, S:6, M:12, L:22, XL:32 };
+const defaultHours = { XS:1.5, S:6, M:14, L:24, XL:32 };
 let hours = {...defaultHours};
 
 // Updated sprint capacities

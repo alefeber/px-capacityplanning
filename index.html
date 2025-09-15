@@ -61,7 +61,7 @@
         <li>Select a <strong>Person</strong>.</li>
         <li>Click <strong>XS/S/M/L/XL</strong> to add work (hours auto-deduct).</li>
         <li>Set <strong>PTO days</strong> (per person) to reduce their capacity.</li>
-        <li>Adjust <strong>Hours per workday</strong> if needed (default 5.5h).</li>
+        <li>PTO uses each person’s own daily rate (their sprint capacity ÷ 10).</li>
         <li>Use <strong>Undo</strong>/<strong>Clear person</strong>/<strong>Reset all</strong> as needed.</li>
       </ol>
     </details>
@@ -94,13 +94,6 @@
     <div class="hr"></div>
 
     <div class="stack">
-      <div class="row">
-        <div style="flex:1;min-width:140px">
-          <label>Hours per workday (for PTO calc)</label>
-          <input id="hoursPerDay" type="number" min="0" step="0.5" value="5.5" />
-        </div>
-      </div>
-
       <label>Adjust default hours (optional)</label>
       <div class="row">
         <span class="pill">XS <input id="hXS" type="number" min="0" value="2" style="width:60px;background:#0e1220;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px"> h</span>
@@ -128,6 +121,7 @@
           <th>Adj. cap (h)</th>
           <th>Used (h)</th>
           <th>Remaining</th>
+          <th>Status</th>
           <th>Counts (XS/S/M/L/XL)</th>
           <th>Remaining mix (fits now)</th>
         </tr>
@@ -141,15 +135,14 @@
 /*** State ***/
 const defaultHours = { XS:2, S:6, M:12, L:22, XL:32 };
 let hours = {...defaultHours};
-let hoursPerDay = 5.5; // used to convert PTO days → hours deducted
 
+// Updated sprint capacities
 let people = [
-  {id: id(), name:"Alec",   capacity:56, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Bessie", capacity:56, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Olivia", capacity:56, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Ryan",   capacity:56, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Nem",    capacity:66, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
-  {id: id(), name:"Jericho",capacity:66, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Bessie Nolan",      capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Olivia Reid",       capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Alec Lefeber",      capacity:57.17, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Nem Ordinario",     capacity:68.67, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
+  {id: id(), name:"Juan Jericho Yang", capacity:68.67, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
 ];
 
 const personSel = document.getElementById('personSel');
@@ -158,20 +151,18 @@ const teamTableBody = document.querySelector('#teamTable tbody');
 /*** UI boot ***/
 function boot(){
   personSel.innerHTML = people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  // set hours inputs
   document.getElementById('hXS').value = hours.XS;
   document.getElementById('hS').value  = hours.S;
   document.getElementById('hM').value  = hours.M;
   document.getElementById('hL').value  = hours.L;
   document.getElementById('hXL').value = hours.XL;
-  document.getElementById('hoursPerDay').value = hoursPerDay;
   renderTable();
 }
 boot();
 
 /*** Helpers ***/
 function id(){ return Math.random().toString(36).slice(2,9); }
-function fmt(n){ return Number(n.toFixed(1)); }
+function fmt(n){ return Number(n.toFixed(2)); }
 
 function addSize(personId, size){
   const p = people.find(x=>x.id===personId);
@@ -205,13 +196,11 @@ function resetAll(){
   people.forEach(p=>clearPerson(p.id));
   people.forEach(p=>p.ptoDays = 0);
   hours = {...defaultHours};
-  hoursPerDay = 5.5;
   document.getElementById('hXS').value = hours.XS;
   document.getElementById('hS').value  = hours.S;
   document.getElementById('hM').value  = hours.M;
   document.getElementById('hL').value  = hours.L;
   document.getElementById('hXL').value = hours.XL;
-  document.getElementById('hoursPerDay').value = hoursPerDay;
   renderTable();
 }
 
@@ -253,22 +242,30 @@ function renderTable(){
   people.forEach(p=>{
     const tr = document.createElement('tr');
 
-    // PTO -> hours
-    const ptoHours = fmt((p.ptoDays || 0) * hoursPerDay);
-    const adjCap   = fmt(p.capacity - ptoHours);
-    const used     = fmt(p.used);
-    const rem      = fmt(adjCap - used);
+    // Per-person daily rate = sprint capacity / 10
+    const dailyRate = p.capacity / 10;
+    const ptoHours  = fmt((p.ptoDays || 0) * dailyRate);
+    const adjCap    = fmt(p.capacity - ptoHours);
+    const used      = fmt(p.used);
+    const rem       = fmt(adjCap - used);
 
-    const pct = adjCap > 0 ? Math.max(0, Math.min(100, Math.round(used / adjCap * 100))) : 0;
-    const rowClass = used>adjCap ? 'bad' : (adjCap-used < 10 ? 'warn':'');
+    // Status thresholds
+    const warnLimit = adjCap;
+    const badLimit  = adjCap * 1.10;
+    let statusText = 'OK';
+    let rowClass = '';
+    if (used >= badLimit) { statusText = 'Over capacity (10%+)'; rowClass = 'bad'; }
+    else if (used >= warnLimit) { statusText = 'Warning zone (≤10% over)'; rowClass = 'warn'; }
+
+    const pct = adjCap > 0 ? Math.max(0, Math.min(100, Math.round((used / adjCap) * 100))) : 0;
     const counts = `${p.counts.XS}/${p.counts.S}/${p.counts.M}/${p.counts.L}/${p.counts.XL}`;
 
     tr.innerHTML = `
       <td><strong>${p.name}</strong></td>
-      <td class="mono">${p.capacity}</td>
+      <td class="mono">${p.capacity.toFixed(2)}</td>
       <td>
-        <input type="number" min="0" step="0.5" value="${p.ptoDays}" style="width:80px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
-        <div class="muted">= <span class="mono">${ptoHours}</span> h</div>
+        <input type="number" min="0" step="0.01" value="${p.ptoDays}" style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
+        <div class="muted">= <span class="mono">${ptoHours}</span> h <span class="muted">(at ${dailyRate.toFixed(3)} h/day)</span></div>
       </td>
       <td class="mono">${adjCap}</td>
       <td>
@@ -279,12 +276,16 @@ function renderTable(){
           </div>
         </div>
       </td>
-      <td><span class="pill" style="border-color:${rem<0?'var(--bad)':rem<10?'var(--warn)':'#23283a'};color:${rem<0?'var(--bad)':rem<10?'var(--warn)':'var(--sub)'}">${rem}</span></td>
+      <td><span class="pill">${rem}</span></td>
+      <td>
+        <span class="pill" style="border-color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'#23283a'};color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'var(--sub)'}">
+          ${statusText}
+        </span>
+      </td>
       <td class="mono">${counts}</td>
       <td>${suggestionText(rem)}</td>
     `;
 
-    // wire PTO input
     const ptoInput = tr.querySelector('input[type="number"]');
     ptoInput.addEventListener('input', ()=>{
       const v = Number(ptoInput.value);
@@ -300,23 +301,4 @@ function renderTable(){
 document.querySelectorAll('.btn.size').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const size = btn.getAttribute('data-size');
-    addSize(personSel.value, size);
-  });
-});
-document.getElementById('undoBtn').onclick = ()=>undo(personSel.value);
-document.getElementById('clearBtn').onclick = ()=>{ if(confirm('Clear this person?')) clearPerson(personSel.value); };
-document.getElementById('resetAllBtn').onclick = ()=>{ if(confirm('Reset everyone and defaults?')) resetAll(); };
-document.getElementById('saveHours').onclick = ()=>{
-  hours = {
-    XS: Number(document.getElementById('hXS').value)||hours.XS,
-    S:  Number(document.getElementById('hS').value)||hours.S,
-    M:  Number(document.getElementById('hM').value)||hours.M,
-    L:  Number(document.getElementById('hL').value)||hours.L,
-    XL: Number(document.getElementById('hXL').value)||hours.XL,
-  };
-  hoursPerDay = Number(document.getElementById('hoursPerDay').value)||hoursPerDay;
-  renderTable();
-};
-</script>
-</body>
-</html>
+    addSize

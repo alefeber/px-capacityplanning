@@ -265,7 +265,7 @@ function renderTable(){
       <td><strong>${p.name}</strong></td>
       <td class="mono">${fmt(p.capacity,1)}</td>
       <td>
-        <input type="number" min="0" step="0.1" value="${p.ptoDays}" style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
+        <input type="number" min="0" step="0.5" value="${p.ptoDays}" style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
         <div class="muted">= <span class="mono">${ptoHours.toFixed(1)}</span> h <span class="muted">(at ${fmt(dailyRate,1).toFixed(1)} h/day)</span></div>
       </td>
       <td class="mono">${adjCap.toFixed(1)}</td>

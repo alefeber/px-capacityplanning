@@ -3,182 +3,135 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Capacity Counter — T-Shirt Calculator</title>
+<title>Capacity Counter — T‑Shirt Calculator</title>
 <style>
   :root{
     --bg:#0b0c10; --panel:#151821; --muted:#25293a; --line:#23283a; --text:#e8eefc; --sub:#aeb8d4;
     --accent:#6da8ff; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
   }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  header{padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121522,#0b0c10)}
+  h1{margin:0;font-size:18px}
+  main{display:grid;gap:16px;padding:16px;grid-template-columns:1fr}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .btn{background:var(--muted);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn.ghost{background:transparent}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 8px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:12px;white-space:nowrap}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
 
-  /* Base */
-  *{ box-sizing:border-box; }
-  html, body { scrollbar-gutter: stable both-edges; }
-  body{ margin:0; overflow-y:scroll; background:var(--bg); color:var(--text);
-        font:14px/1.45 system-ui, Segoe UI, Roboto, Helvetica, Arial; }
-
-  header{ padding:12px 16px; border-bottom:1px solid var(--line);
-          background:linear-gradient(180deg,#121522,#0b0c10) }
-  h1{ margin:0; font-size:18px }
-
-  /* Layout: fixed sidebar so main table never overlaps */
-  main{
-    display:grid; gap:16px; padding:16px;
-    grid-template-columns: 320px 1fr;  /* fixed sidebar */
-    align-items:start;
+  /* Top help bar */
+  .tophelp{padding:12px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .tophelp details summary{cursor:pointer;list-style:none}
+  .tophelp details summary::-webkit-details-marker{display:none}
+  .tophelp input[type="number"]{
+    width:72px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 8px
   }
 
-  .card{
-    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  /* Team table */
+  .table-wrap{padding:12px 14px;overflow-x:auto}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  thead th{position:sticky;top:0;background:transparent}
+  th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;color:var(--sub);text-align:left}
+  .progress{height:8px;background:#0e1220;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .bar{height:100%;background:var(--ok)}
+  .warn .bar{background:var(--warn)}
+  .bad .bar{background:var(--bad)}
+  .status-pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:12px}
+  .status-warn{border-color:var(--warn);color:var(--warn)}
+  .status-bad{border-color:var(--bad);color:var(--bad)}
+
+  /* XS/S/M/L/XL vertical controls */
+  .sizes{
+    display:grid;
+    grid-template-columns: repeat(5, 44px);
+    gap:10px;
+    justify-content:flex-start; /* keep controls left-aligned, no stretch */
   }
+  .sizeCol{display:grid;grid-template-rows:auto 24px 16px 24px;gap:4px;justify-items:center;align-items:center;width:40px}
+  .sizeCol .lbl{font-size:11px;color:var(--sub)}
+  .bubble{width:24px;height:24px;border-radius:8px;background:#f5f7ff;border:1px solid #3a4157;display:grid;place-items:center;color:#0b0c10}
+  .bubble.btn{padding:0;cursor:pointer}
+  .bubble.btn:active{transform:translateY(1px)}
+  .count{font-size:12px}
 
-  /* Sidebar */
-  .side{ padding:12px; position:relative; }
-  .side details summary{ cursor:pointer; list-style:none; }
-  .side details summary::-webkit-details-marker{ display:none; }
-  .side label{ font-size:12px; color:var(--sub); display:block; margin-bottom:6px; }
-  .side .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .side select, .side input[type="number"], .side input[type="text"]{
-    width:100%; background:#10131c; color:var(--text); border:1px solid var(--line);
-    border-radius:10px; padding:8px;
-  }
-  .btn{ background:var(--muted); color:var(--text); border:1px solid var(--line);
-        border-radius:10px; padding:8px 12px; cursor:pointer; }
-  .btn.ghost{ background:transparent; }
-  .btn.size{ min-width:44px; font-weight:700; font-size:12px; padding:6px 10px }
-  .pill{ display:inline-flex; align-items:center; gap:6px;
-         padding:3px 10px; border-radius:999px; border:1px solid var(--line);
-         color:var(--sub); font-size:12px; white-space:nowrap }
-  .controlRow{ display:grid; grid-template-columns: 1fr; gap:8px; }
-  .hr{ height:1px; background:var(--line); margin:10px 0; }
+  /* Column widths (Sizes gets the most) */
+  /* 1 Person | 2 PTO | 3 Sizes | 4 Used | 5 Remaining | 6 Status | 7 Counts | 8 Mix */
+  #teamTable{table-layout:fixed;width:100%}
+  #teamTable th:nth-child(1), #teamTable td:nth-child(1){width:16%}  /* Person */
+  #teamTable th:nth-child(2), #teamTable td:nth-child(2){width:10%}  /* PTO */
+  #teamTable th:nth-child(3), #teamTable td:nth-child(3){width:26%}  /* Sizes (compact) */
+  #teamTable th:nth-child(4), #teamTable td:nth-child(4){width:12%}  /* Used */
+  #teamTable th:nth-child(5), #teamTable td:nth-child(5){width:7%}   /* Remaining */
+  #teamTable th:nth-child(6), #teamTable td:nth-child(6){width:6%}   /* Status */
+  #teamTable th:nth-child(7), #teamTable td:nth-child(7){width:6%}   /* Counts */
+  #teamTable th:nth-child(8), #teamTable td:nth-child(8){width:17%}  /* Mix (roomier) */
+  
+  /* Keep the mix cell tall enough so the row height doesn't jump */
+  .mix{min-height:64px}
+  .mix .line{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mix .tag{display:inline-block;min-width:76px;color:var(--sub)}
 
-  /* Quick sizes: keep to one line */
-  .quickSizes{ display:flex; gap:6px; flex-wrap:nowrap; overflow:hidden; }
-
-  /* Hours tweak chips */
-  .side .pill input{
-    width:60px; height:28px; background:#0e1220; color:var(--text);
-    border:1px solid var(--line); border-radius:8px; padding:4px 6px;
-  }
-
-  /* Main table */
-  .main{ padding:12px; }
-  .tableWrap{ overflow:auto; }
-  table{ width:100%; border-collapse:collapse; table-layout:fixed; } /* fixed, no jiggle */
-  th, td{ padding:8px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  th{ font-size:12px; color:var(--sub); text-align:left; }
-
-  /* truncate most cells; only .mix wraps */
-  td, th{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  td.mix, th.mix{ white-space:normal; overflow:visible; }
-
-  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-  .progress{ height:8px; background:#0e1220; border:1px solid var(--line);
-             border-radius:999px; overflow:hidden; }
-  .bar{ height:100%; background:var(--ok); }
-  .warn .bar{ background:var(--warn); }
-  .bad  .bar{ background:var(--bad); }
-
-  /* fixed-width chips avoid twitching when numbers change */
-  .remainPill{ display:inline-block; min-width:60px; text-align:center; }
-  .countsCell{ min-width:84px; text-align:center; }
-
-  @media (max-width: 980px){
-    main{ grid-template-columns: 1fr; }
-  }
 </style>
 </head>
 <body>
-<header><h1>Capacity Counter — T-Shirt Calculator</h1></header>
+<header><h1>Capacity Counter — T‑Shirt Calculator</h1></header>
 
 <main>
-  <!-- ============== SIDEBAR ============== -->
-  <aside class="card side">
-    <details open>
+  <!-- Top help bar -->
+  <section class="card tophelp">
+    <details open style="min-width:260px;flex:1 1 420px">
       <summary class="row" style="gap:8px"><strong>How to use</strong><span class="pill">click to collapse</span></summary>
-      <ol style="margin:8px 0 0 20px; color:var(--sub); font-size:12px">
-        <li>Select a <b>Person</b>.</li>
-        <li>Click <b>XS/S/M/L/XL</b> to add work (hours auto-deduct).</li>
-        <li>Enter <b>PTO days</b> (0.5, 1, 1.5…) to reduce capacity.</li>
-        <li>PTO uses each person’s daily rate (sprint capacity ÷ 10).</li>
+      <ol style="margin:8px 0 0 20px;color:var(--sub);font-size:12px">
+        <li>Use the <b>− / +</b> controls in each person’s row to add/remove XS/S/M/L/XL tasks.</li>
+        <li>Enter <b>PTO days</b> to reduce capacity (rounds to 0.5 increments).</li>
+        <li>Defaults for sizes can be adjusted on the right.</li>
       </ol>
     </details>
-
-    <div style="margin-top:12px">
-      <label>Person</label>
-      <select id="personSel"></select>
-    </div>
-
-    <div style="margin-top:12px">
-      <label>Quick add by size</label>
-      <div class="quickSizes">
-        <button class="btn size" data-size="XS" title="~1.5h default">XS</button>
-        <button class="btn size" data-size="S"  title="~6h default">S</button>
-        <button class="btn size" data-size="M"  title="~14h default">M</button>
-        <button class="btn size" data-size="L"  title="~24h default">L</button>
-        <button class="btn size" data-size="XL" title="~32h default">XL</button>
-      </div>
-      <div style="margin-top:6px"><span class="pill">Defaults: XS 1.5h • S 6h • M 14h • L 24h • XL 32h</span></div>
-    </div>
-
-    <div class="hr"></div>
-
-    <div class="controlRow">
-      <button id="undoBtn" class="btn">Undo last for person</button>
-      <button id="clearBtn" class="btn ghost">Clear person</button>
-      <button id="resetAllBtn" class="btn ghost">Reset all</button>
-    </div>
-
-    <div class="hr"></div>
-
-    <div>
-      <label>Adjust default hours (optional)</label>
+    <div style="flex:1 1 520px">
+      <label style="font-size:12px;color:var(--sub)">Adjust default hours (optional)</label>
       <div class="row" style="margin-top:6px">
         <span class="pill">XS <input id="hXS" type="number" step="0.1" min="0" value="1.5"> h</span>
-        <span class="pill">S <input id="hS"  type="number" step="0.1" min="0" value="6"> h</span>
-        <span class="pill">M <input id="hM"  type="number" step="0.1" min="0" value="14"> h</span>
-        <span class="pill">L <input id="hL"  type="number" step="0.1" min="0" value="24"> h</span>
+        <span class="pill">S <input id="hS" type="number" step="0.1" min="0" value="6"> h</span>
+        <span class="pill">M <input id="hM" type="number" step="0.1" min="0" value="14"> h</span>
+        <span class="pill">L <input id="hL" type="number" step="0.1" min="0" value="24"> h</span>
         <span class="pill">XL <input id="hXL" type="number" step="0.1" min="0" value="32"> h</span>
-      </div>
-      <div class="row" style="margin-top:6px">
         <button id="saveHours" class="btn">Save hours</button>
+        <button id="resetAllBtn" class="btn ghost">Reset all</button>
       </div>
     </div>
-  </aside>
+  </section>
 
-  <!-- ============== MAIN PANEL ============== -->
-  <section class="card main">
-    <h3 style="margin:10px 12px">Team Capacity (live)</h3>
-    <div class="tableWrap">
-      <table id="teamTable">
-        <colgroup>
-          <col style="width:14%">   <!-- Person -->
-          <col style="width:7%">    <!-- Cap (h) -->
-          <col style="width:12%">   <!-- PTO days -->
-          <col style="width:9%">    <!-- Adj. cap (h) -->
-          <col style="width:14%">   <!-- Used (h) -->
-          <col style="width:8%">    <!-- Remaining -->
-          <col style="width:10%">   <!-- Status -->
-          <col style="width:8%">    <!-- Counts -->
-          <col style="width:18%">   <!-- Remaining mix -->
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Person</th><th>Cap (h)</th><th>PTO days</th><th>Adj. cap (h)</th>
-            <th>Used (h)</th><th>Remaining</th><th>Status</th>
-            <th>Counts (XS/S/M/L/XL)</th><th class="mix">Remaining mix (fits now)</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <!-- Team table -->
+  <section class="card table-wrap">
+    <h3 style="margin:0 0 8px">Team Capacity (live)</h3>
+    <table id="teamTable">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>PTO days</th>
+          <th>Sizes</th>
+          <th>Used (h)</th>
+          <th>Remaining</th>
+          <th>Status</th>
+          <th>Counts</th>
+          <th>Remaining mix (fits now)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 </main>
 
 <script>
-/* ====== DATA ====== */
+/*** Defaults ***/
 const defaultHours = { XS:1.5, S:6, M:14, L:24, XL:32 };
 let hours = {...defaultHours};
 
+/*** People & capacities (two‑week sprint) ***/
 let people = [
   {id: id(), name:"Bessie Nolan",      capacity:57.2, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
   {id: id(), name:"Olivia Reid",       capacity:57.2, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
@@ -187,160 +140,137 @@ let people = [
   {id: id(), name:"Juan Jericho Yang", capacity:68.7, ptoDays:0, used:0, counts:{XS:0,S:0,M:0,L:0,XL:0}, history:[]},
 ];
 
-/* ====== ELEMENTS ====== */
-const personSel = document.getElementById('personSel');
-const teamTableBody = document.querySelector('#teamTable tbody');
-
-/* ====== BOOT ====== */
-function boot(){
-  personSel.innerHTML = people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  ['XS','S','M','L','XL'].forEach(k => document.getElementById('h'+k).value = hours[k]);
-  renderTable();
-}
-boot();
-
-/* ====== HELPERS ====== */
+/*** Helpers ***/
 function id(){ return Math.random().toString(36).slice(2,9); }
-function fmt(n,d=1){ return Number(n.toFixed(d)); }
+function round1(n){ return Math.round(n*10)/10; }
+function fmt(n){ return Number.isFinite(n) ? round1(n).toFixed(1) : "0.0"; }
 
-/* ====== ACTIONS ====== */
-function addSize(personId, size){
-  const p = people.find(x=>x.id===personId);
-  if(!p) return;
+function addSize(p, size, delta){
   const h = Number(hours[size]||0);
-  p.used += h;
-  p.counts[size] += 1;
-  p.history.push({size, h});
-  renderTable();
-}
-function undo(personId){
-  const p = people.find(x=>x.id===personId);
-  if(!p || !p.history.length) return;
-  const last = p.history.pop();
-  p.used -= last.h;
-  p.counts[last.size] -= 1;
-  renderTable();
-}
-function clearPerson(personId){
-  const p = people.find(x=>x.id===personId);
-  if(!p) return;
-  p.used = 0;
-  p.counts = {XS:0,S:0,M:0,L:0,XL:0};
-  p.history = [];
-  renderTable();
-}
-function resetAll(){
-  people.forEach(p=>clearPerson(p.id));
-  people.forEach(p=>p.ptoDays = 0);
-  hours = {...defaultHours};
-  renderTable();
+  if(!h) return;
+  if(delta>0){ p.used += h; p.counts[size] += 1; p.history.push({size,h}); }
+  else{
+    if(p.counts[size] > 0){
+      p.used -= h; p.counts[size] -= 1;
+      // remove one matching history item
+      const idx = p.history.findIndex(x=>x.size===size && x.h===h);
+      if(idx>-1) p.history.splice(idx,1);
+    }
+  }
 }
 
-/* ====== SUGGESTIONS ====== */
 function packByOrder(rem, order){
   const combo = {XS:0,S:0,M:0,L:0,XL:0};
   let left = rem;
   for(const s of order){
     const h = hours[s];
     if(h<=0) continue;
-    const count = Math.floor(left / h);
-    combo[s] = count;
-    left -= count * h;
+    const cnt = Math.floor(left / h);
+    combo[s] = cnt;
+    left -= cnt*h;
   }
-  return {combo, slack: fmt(left)};
+  return {combo, slack: round1(left)};
 }
-function suggestionText(rem){
-  if(rem <= 0) return `<span class="pill" style="border-color:var(--bad);color:var(--bad)">Over capacity</span>`;
-  const bigFirst  = packByOrder(rem, ["XL","L","M","S","XS"]);
-  const medFirst  = packByOrder(rem, ["M","L","S","XS","XL"]);
-  const smallFirst= packByOrder(rem, ["S","XS","M","L","XL"]);
-  const format = (obj, order) => {
+function mixText(rem){
+  if(rem <= 0) return `<span class="status-pill status-bad">Over capacity</span>`;
+  const big  = packByOrder(rem, ["XL","L","M","S","XS"]);
+  const med  = packByOrder(rem, ["M","L","S","XS","XL"]);
+  const sm   = packByOrder(rem, ["S","XS","M","L","XL"]);
+
+  const fmtCombo = (obj, order, label)=>{
     const parts = order.filter(k=>obj.combo[k]>0).map(k=>`${obj.combo[k]}${k}`);
-    return (parts.length? parts.join(" + ") : "—") + (obj.slack>0 ? ` (+${obj.slack}h slack)` : "");
+    const addSlack = obj.slack>0 ? ` (+${obj.slack}h slack)` : "";
+    const body = parts.length? parts.join(" + ") + addSlack : "—";
+    return `<span class="line"><span class="tag">${label}</span> ${body}</span>`;
   };
-  return `
-    <div style="display:grid;gap:4px">
-      <div><span class="pill">Big-first:</span> ${format(bigFirst,["XL","L","M","S","XS"])}</div>
-      <div><span class="pill">Medium-first:</span> ${format(medFirst,["M","L","S","XS","XL"])}</div>
-      <div><span class="pill">Small-first:</span> ${format(smallFirst,["S","XS","M","L","XL"])}</div>
-    </div>`;
+  return `<div class="mix">${fmtCombo(big,["XL","L","M","S","XS"],"Big-first:")}${fmtCombo(med,["M","L","S","XS","XL"],"Medium-first:")}${fmtCombo(sm,["S","XS","M","L","XL"],"Small-first:")}</div>`;
 }
 
-/* ====== RENDER ====== */
-function renderTable(){
-  teamTableBody.innerHTML = '';
+/*** Render ***/
+const tbody = document.querySelector('#teamTable tbody');
+function render(){
+  tbody.innerHTML = '';
   people.forEach(p=>{
     const tr = document.createElement('tr');
 
-    const dailyRate = p.capacity / 10;
-    const ptoHours  = fmt((p.ptoDays || 0) * dailyRate, 1);
-    const adjCap    = fmt(p.capacity - ptoHours, 1);
-    const used      = fmt(p.used, 1);
-    const rem       = fmt(adjCap - used, 1);
+    const daily = p.capacity/10;
+    const ptoH = round1((p.ptoDays||0)*daily);
+    const adj = round1(p.capacity - ptoH);
+    const used = round1(p.used);
+    const rem = round1(adj - used);
 
-    const warnLimit = adjCap;
-    const badLimit  = adjCap * 1.10;
-    let statusText = 'OK';
-    let rowClass = '';
-    if (used >= badLimit) { statusText = 'Over capacity (10%+)'; rowClass = 'bad'; }
-    else if (used >= warnLimit) { statusText = 'Warning zone (≤10% over)'; rowClass = 'warn'; }
+    const warnLimit = adj;
+    const badLimit = round1(adj * 1.10);
+    let status = 'OK', statusCls = '';
+    if(used >= badLimit){ status='Over (10%+)'; statusCls='status-bad'; }
+    else if(used >= warnLimit){ status='Warning'; statusCls='status-warn'; }
 
-    const pct = adjCap > 0 ? Math.max(0, Math.min(100, Math.round((used / adjCap) * 100))) : 0;
-    const counts = `${p.counts.XS}/${p.counts.S}/${p.counts.M}/${p.counts.L}/${p.counts.XL}`;
+    const pct = adj>0? Math.max(0, Math.min(100, Math.round(used/adj*100))) : 0;
 
     tr.innerHTML = `
-      <td><strong>${p.name}</strong></td>
-      <td class="mono">${fmt(p.capacity,1).toFixed(1)}</td>
-      <td>
-        <input type="text" inputmode="decimal" placeholder="0, 0.5, 1…" value="${Number(p.ptoDays).toFixed(1)}"
-               style="width:90px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
-        <div style="color:var(--sub);font-size:12px;margin-top:2px">
-          = <span class="mono">${ptoHours.toFixed(1)}</span> h (at ${fmt(dailyRate,1).toFixed(1)} h/day)
+      <td class="personCell">
+        <strong>${p.name}</strong>
+        <div class="personMeta">
+          cap: <span class="mono">${fmt(adj)}</span>/<span class="mono">${fmt(p.capacity)}</span>
+          &nbsp; • &nbsp; daily <span class="mono">${fmt(daily)}</span> h
         </div>
       </td>
-      <td class="mono">${adjCap.toFixed(1)}</td>
       <td>
-        <div class="row" style="gap:6px; align-items:center">
-          <span class="mono">${used.toFixed(1)}</span>
-          <div class="progress ${rowClass}" style="flex:1; min-width:120px"><div class="bar" style="width:${pct}%"></div></div>
+        <input class="pto" type="number" step="0.5" min="0" value="${p.ptoDays}"
+               style="width:80px;background:#10131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px" />
+        <div style="color:var(--sub);font-size:12px">= <span class="mono">${fmt(ptoH)}</span> h</div>
+      </td>
+      <td>${sizesBlock(p)}</td>
+      <td>
+        <div class="row" style="gap:8px">
+          <span class="mono">${fmt(used)}</span>
+          <div class="progress ${statusCls==='status-bad'?'bad':statusCls==='status-warn'?'warn':''}" style="flex:1;min-width:120px">
+            <div class="bar" style="width:${pct}%"></div>
+          </div>
         </div>
       </td>
-      <td><span class="pill remainPill">${rem.toFixed(1)}</span></td>
-      <td>
-        <span class="pill" style="border-color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'#23283a'};color:${rowClass==='bad'?'var(--bad)':rowClass==='warn'?'var(--warn)':'var(--sub)'}">
-          ${statusText}
-        </span>
-      </td>
-      <td class="mono countsCell">${counts}</td>
-      <td class="mix">${suggestionText(rem)}</td>
+      <td><span class="pill mono">${fmt(rem)}</span></td>
+      <td><span class="status-pill ${statusCls}">${status}</span></td>
+      <td class="mono">${p.counts.XS}/${p.counts.S}/${p.counts.M}/${p.counts.L}/${p.counts.XL}</td>
+      <td>${mixText(rem)}</td>
     `;
 
-    // PTO input behavior: overwrite on focus/click, round to 0.5 on blur
-    const ptoInput = tr.querySelector('input[type="text"]');
-    ptoInput.addEventListener('focus', e => setTimeout(()=>e.target.select(), 0));
-    ptoInput.addEventListener('click',  e => e.target.select());
-    ptoInput.addEventListener('input', ()=>{
-      const raw = parseFloat(ptoInput.value);
-      p.ptoDays = Number.isFinite(raw) ? raw : 0;
-    });
-    ptoInput.addEventListener('blur', ()=>{
-      const raw = parseFloat(ptoInput.value);
-      const rounded = Number.isFinite(raw) ? Math.max(0, Math.round(raw*2)/2) : 0;
-      p.ptoDays = rounded;
-      renderTable();
+    // PTO input
+    tr.querySelector('.pto').addEventListener('input', e=>{
+      const v = Number(e.target.value);
+      p.ptoDays = Number.isFinite(v)? v : 0;
+      render();
     });
 
-    teamTableBody.appendChild(tr);
+    tbody.appendChild(tr);
   });
 }
 
-/* ====== EVENTS ====== */
-document.querySelectorAll('.btn.size').forEach(btn=>{
-  btn.addEventListener('click', ()=> addSize(personSel.value, btn.getAttribute('data-size')));
+function sizesBlock(p){
+  const box = (label, key) => `
+    <div class="sizeCol">
+      <div class="lbl">${label}</div>
+      <button class="bubble btn" data-person="${p.id}" data-size="${key}" data-delta="+">+</button>
+      <div class="count mono">${p.counts[key]}</div>
+      <button class="bubble btn" data-person="${p.id}" data-size="${key}" data-delta="-">−</button>
+    </div>
+  `;
+  return `<div class="sizes">
+    ${box('XS','XS')}${box('S','S')}${box('M','M')}${box('L','L')}${box('XL','XL')}
+  </div>`;
+}
+
+document.addEventListener('click', (e)=>{
+  const b = e.target.closest('.bubble.btn');
+  if(!b) return;
+  const person = people.find(x=>x.id===b.dataset.person);
+  const size = b.dataset.size;
+  const delta = b.dataset.delta==='+'? 1 : -1;
+  addSize(person, size, delta);
+  render();
 });
-document.getElementById('undoBtn').onclick  = ()=> undo(personSel.value);
-document.getElementById('clearBtn').onclick = ()=> { if(confirm('Clear this person?')) clearPerson(personSel.value); };
-document.getElementById('resetAllBtn').onclick = ()=> { if(confirm('Reset everyone and defaults?')) resetAll(); };
+
+/*** Controls ***/
 document.getElementById('saveHours').onclick = ()=>{
   hours = {
     XS: Number(document.getElementById('hXS').value)||hours.XS,
@@ -349,8 +279,22 @@ document.getElementById('saveHours').onclick = ()=>{
     L:  Number(document.getElementById('hL').value)||hours.L,
     XL: Number(document.getElementById('hXL').value)||hours.XL,
   };
-  renderTable();
+  render();
 };
+document.getElementById('resetAllBtn').onclick = ()=>{
+  if(!confirm('Reset everyone, counts, PTO, and defaults?')) return;
+  people.forEach(p=>{ p.ptoDays=0; p.used=0; p.counts={XS:0,S:0,M:0,L:0,XL:0}; p.history=[]; });
+  hours = {...defaultHours};
+  document.getElementById('hXS').value=hours.XS;
+  document.getElementById('hS').value=hours.S;
+  document.getElementById('hM').value=hours.M;
+  document.getElementById('hL').value=hours.L;
+  document.getElementById('hXL').value=hours.XL;
+  render();
+};
+
+/*** Boot ***/
+render();
 </script>
 </body>
 </html>
